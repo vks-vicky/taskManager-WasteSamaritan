@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import TaskForm from "../components/Task/TaskForm";
 import TaskTable from "../components/Task/TaskTable";
-import { Task, Category, Tag } from "../types/models";
+import FilterPanel from "../components/Task/FilterPanel";
+import { Task, Category, Tag, TaskStatus } from "../types/models";
 import {
   createTask,
   updateTask,
@@ -20,6 +21,17 @@ const TaskDashboard = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [filters, setFilters] = useState<{
+    status?: TaskStatus;
+    categoryId?: string;
+    tagIds: string[];
+    searchQuery: string;
+  }>({
+    status: undefined,
+    categoryId: undefined,
+    tagIds: [],
+    searchQuery: "",
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,14 +65,8 @@ const TaskDashboard = () => {
     }
   };
 
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setShowForm(true);
-  };
-
   const handleUpdateTask = async (updatedData: any) => {
     if (!editingTask) return;
-
     try {
       await updateTask(editingTask.id, updatedData);
       setTasks(prev =>
@@ -76,7 +82,6 @@ const TaskDashboard = () => {
   const handleDeleteTask = async (taskId: string) => {
     const confirm = window.confirm("Are you sure you want to delete this task?");
     if (!confirm) return;
-
     try {
       await deleteTask(taskId);
       setTasks(prev => prev.filter(t => t.id !== taskId));
@@ -84,6 +89,23 @@ const TaskDashboard = () => {
       console.error("Error deleting task:", error);
     }
   };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setShowForm(true);
+  };
+
+  const filteredTasks = tasks.filter(task => {
+    const matchStatus = !filters.status || task.status === filters.status;
+    const matchCategory = !filters.categoryId || task.categoryId === filters.categoryId;
+    const matchTags =
+      filters.tagIds.length === 0 || filters.tagIds.every(id => task.tagIds.includes(id));
+    const matchSearch =
+      task.title.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
+      (task.description ?? "").toLowerCase().includes(filters.searchQuery.toLowerCase());
+
+    return matchStatus && matchCategory && matchTags && matchSearch;
+  });
 
   return (
     <div style={{ padding: "2rem" }}>
@@ -102,8 +124,14 @@ const TaskDashboard = () => {
         />
       )}
 
+      <FilterPanel
+        categories={categories}
+        tags={tags}
+        onChange={(f) => setFilters(f)}
+      />
+
       <TaskTable
-        tasks={tasks}
+        tasks={filteredTasks}
         categories={categories}
         tags={tags}
         onEdit={handleEditTask}
