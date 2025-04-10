@@ -1,14 +1,22 @@
-
-import React, { useState } from "react";
-import { TaskStatus, Category, Tag } from "../../types/models";
+import React, { useState, useEffect } from "react";
+import { TaskStatus, Category, Tag, Task } from "../../types/models";
 
 interface Props {
-  onSubmit: (data: any) => void;
+  onSubmit: (data: {
+    title: string;
+    description?: string;
+    status: TaskStatus;
+    categoryId: string;
+    tagIds: string[];
+    dueDate: string;
+    createdAt?: string;
+  }) => void;
   categories: Category[];
   tags: Tag[];
+  initialData?: Task;
 }
 
-const TaskForm: React.FC<Props> = ({ onSubmit, categories, tags }) => {
+const TaskForm: React.FC<Props> = ({ onSubmit, categories, tags, initialData }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<TaskStatus>("todo");
@@ -16,43 +24,84 @@ const TaskForm: React.FC<Props> = ({ onSubmit, categories, tags }) => {
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (initialData) {
+      setTitle(initialData.title);
+      setDescription(initialData.description || "");
+      setStatus(initialData.status);
+      setCategoryId(initialData.categoryId);
+      setTagIds(initialData.tagIds);
+      setDueDate(initialData.dueDate.split("T")[0]); // For input[type=date]
+    }
+  }, [initialData]);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const createdAt = new Date().toISOString();
-    onSubmit({ title, description, status, categoryId, tagIds, dueDate, createdAt });
+
+    const payload = {
+      title,
+      description,
+      status,
+      categoryId,
+      tagIds,
+      dueDate,
+      createdAt: initialData?.createdAt || new Date().toISOString()
+    };
+
+    onSubmit(payload);
   };
 
   const toggleTag = (tagId: string) => {
-    setTagIds(prev =>
-      prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
+    setTagIds((prev) =>
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId]
     );
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+    <form
+      onSubmit={handleSubmit}
+      style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+    >
       <input
         type="text"
         placeholder="Title"
         value={title}
-        onChange={e => setTitle(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          setTitle(e.target.value)
+        }
         required
       />
 
       <textarea
         placeholder="Description"
         value={description}
-        onChange={e => setDescription(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+          setDescription(e.target.value)
+        }
       />
 
-      <select value={status} onChange={e => setStatus(e.target.value as TaskStatus)}>
+      <select
+        value={status}
+        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+          setStatus(e.target.value as TaskStatus)
+        }
+      >
         <option value="todo">To Do</option>
         <option value="in-progress">In Progress</option>
         <option value="done">Done</option>
       </select>
 
-      <select value={categoryId} onChange={e => setCategoryId(e.target.value)} required>
+      <select
+        value={categoryId}
+        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+          setCategoryId(e.target.value)
+        }
+        required
+      >
         <option value="">Select Category</option>
-        {categories.map(cat => (
+        {categories.map((cat) => (
           <option key={cat.id} value={cat.id}>
             {cat.name}
           </option>
@@ -60,7 +109,7 @@ const TaskForm: React.FC<Props> = ({ onSubmit, categories, tags }) => {
       </select>
 
       <div>
-        {tags.map(tag => (
+        {tags.map((tag) => (
           <label key={tag.id} style={{ marginRight: "10px" }}>
             <input
               type="checkbox"
@@ -76,11 +125,13 @@ const TaskForm: React.FC<Props> = ({ onSubmit, categories, tags }) => {
       <input
         type="date"
         value={dueDate}
-        onChange={e => setDueDate(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          setDueDate(e.target.value)
+        }
         required
       />
 
-      <button type="submit">Create Task</button>
+      <button type="submit">{initialData ? "Update Task" : "Create Task"}</button>
     </form>
   );
 };
