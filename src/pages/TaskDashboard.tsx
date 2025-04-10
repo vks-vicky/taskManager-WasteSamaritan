@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import TaskForm from "../components/Task/TaskForm";
 import TaskTable from "../components/Task/TaskTable";
 import FilterPanel from "../components/Task/FilterPanel";
+import TagManager from "../components/Tag/TagManager";
+import CategoryManager from "../components/Category/CategoryManager";
 import { Task, Category, Tag, TaskStatus } from "../types/models";
 import {
   createTask,
