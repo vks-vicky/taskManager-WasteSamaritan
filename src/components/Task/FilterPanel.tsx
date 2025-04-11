@@ -1,5 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { Category, Tag, TaskStatus } from "../../types/models";
+import {
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  OutlinedInput,
+  Checkbox,
+  ListItemText,
+  TextField,
+  Stack,
+  Button,
+} from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { TaskStatus, Category, Tag } from "../../types/models";
 
 interface Filters {
   status?: TaskStatus;
@@ -15,92 +28,105 @@ interface Props {
 }
 
 const FilterPanel: React.FC<Props> = ({ categories, tags, onChange }) => {
-  const [status, setStatus] = useState<TaskStatus | undefined>();
-  const [categoryId, setCategoryId] = useState<string | undefined>();
+  const [status, setStatus] = useState<TaskStatus | "">("");
+  const [categoryId, setCategoryId] = useState<string>("");
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    onChange({ status, categoryId, tagIds, searchQuery });
+    onChange({
+      status: status || undefined,
+      categoryId: categoryId || undefined,
+      tagIds,
+      searchQuery,
+    });
   }, [status, categoryId, tagIds, searchQuery]);
 
   const handleClearFilters = () => {
-    setStatus(undefined);
-    setCategoryId(undefined);
+    setStatus("");
+    setCategoryId("");
     setTagIds([]);
     setSearchQuery("");
   };
 
-  const toggleTag = (id: string) => {
-    setTagIds(prev =>
-      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
-    );
-  };
-
   return (
-    <div style={{ marginBottom: "1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-      <div>
-        <strong>Status:</strong><br />
-        {["todo", "in-progress", "done"].map((s) => (
-          <label key={s} style={{ marginRight: "1rem" }}>
-            <input
-              type="radio"
-              name="status"
-              value={s}
-              checked={status === s}
-              onChange={() => setStatus(s as TaskStatus)}
-            />
-            {s}
-          </label>
-        ))}
-        <label style={{ marginLeft: "1rem" }}>
-          <input
-            type="radio"
-            name="status"
-            value=""
-            checked={!status}
-            onChange={() => setStatus(undefined)}
-          />
-          All
-        </label>
-      </div>
-
-      <div>
-        <strong>Category:</strong><br />
-        <select value={categoryId || ""} onChange={e => setCategoryId(e.target.value || undefined)}>
-          <option value="">All Categories</option>
-          {categories.map(cat => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <strong>Tags:</strong><br />
-        {tags.map(tag => (
-          <label key={tag.id} style={{ marginRight: "1rem" }}>
-            <input
-              type="checkbox"
-              value={tag.id}
-              checked={tagIds.includes(tag.id)}
-              onChange={() => toggleTag(tag.id)}
-            />
-            {tag.name}
-          </label>
-        ))}
-      </div>
-
-      <div>
-        <input
-          type="text"
-          placeholder="Search title or description"
+    <Box sx={{ mb: 2 }}>
+      <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+        <TextField
+          label="Search"
+          placeholder="Title or Description"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          size="small"
         />
-      </div>
 
-      <button onClick={handleClearFilters}>Clear All Filters</button>
-    </div>
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Status</InputLabel>
+          <Select
+            value={status}
+            label="Status"
+            onChange={(e) => setStatus(e.target.value as TaskStatus | "")}
+          >
+            <MenuItem value="">All</MenuItem>
+            <MenuItem value="todo">To Do</MenuItem>
+            <MenuItem value="in-progress">In Progress</MenuItem>
+            <MenuItem value="done">Done</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Category</InputLabel>
+          <Select
+            value={categoryId}
+            label="Category"
+            onChange={(e) => setCategoryId(e.target.value)}
+          >
+            <MenuItem value="">All</MenuItem>
+            {categories.map((cat) => (
+              <MenuItem key={cat.id} value={cat.id}>
+                {cat.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Tags</InputLabel>
+          <Select
+            multiple
+            value={tagIds}
+            onChange={(e) => setTagIds(e.target.value as string[])}
+            input={<OutlinedInput label="Tags" />}
+            renderValue={(selected) =>
+              selected
+                .map((id) => tags.find((tag) => tag.id === id)?.name)
+                .join(", ")
+            }
+          >
+            {tags.map((tag) => (
+              <MenuItem key={tag.id} value={tag.id}>
+                <Checkbox checked={tagIds.includes(tag.id)} />
+                <Box display="flex" alignItems="center" gap={1}>
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    backgroundColor: tag.color,
+                  }}
+                />
+                <ListItemText primary={tag.name} />
+              </Box>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <Button onClick={handleClearFilters} variant="outlined" size="small">
+          Clear
+        </Button>
+      </Stack>
+    </Box>
   );
 };
 

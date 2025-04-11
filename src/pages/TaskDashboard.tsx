@@ -52,6 +52,10 @@ const TaskDashboard = () => {
       setCategories(cats);
       setTags(tgs);
       setTasks(tsks);
+
+    const listener = () => setShowForm(true);
+      window.addEventListener("openTaskForm", listener);
+      return () => window.removeEventListener("openTaskForm", listener);
     };
 
     fetchData();

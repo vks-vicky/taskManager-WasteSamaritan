@@ -1,5 +1,22 @@
-import React, { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  TablePagination,
+  Typography,
+  Box,
+  Tooltip,
+  Stack,
+} from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { Task, Category, Tag } from "../../types/models";
+import { useState } from "react";
 
 interface Props {
   tasks: Task[];
@@ -9,100 +26,116 @@ interface Props {
   onDelete: (taskId: string) => void;
 }
 
-const TASKS_PER_PAGE = 5;
-
 const TaskTable: React.FC<Props> = ({ tasks, categories, tags, onEdit, onDelete }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortKey, setSortKey] = useState<keyof Task>("title");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const getCategoryName = (id: string) =>
     categories.find(cat => cat.id === id)?.name || "Unknown";
 
-  const getTagNames = (ids: string[]) =>
-    ids.map(id => tags.find(tag => tag.id === id)?.name || "Unknown").join(", ");
+  const renderTagBadges = (ids: string[]) => (
+    <Stack direction="row" spacing={1} flexWrap="wrap">
+      {ids.map(id => {
+        const tag = tags.find(t => t.id === id);
+        if (!tag) return null;
+        return (
+          <Box
+            key={id}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              backgroundColor: "#eee",
+              borderRadius: 2,
+              px: 1,
+              py: 0.3,
+              fontSize: "0.75rem",
+            }}
+          >
+            <Box
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                backgroundColor: tag.color,
+              }}
+            />
+            {tag.name}
+          </Box>
+        );
+      })}
+    </Stack>
+  );
+  
 
-  const sortedTasks = [...tasks].sort((a, b) => {
-    const valA = a[sortKey];
-    const valB = b[sortKey];
-
-    if (typeof valA === "string" && typeof valB === "string") {
-      return sortOrder === "asc"
-        ? valA.localeCompare(valB)
-        : valB.localeCompare(valA);
-    }
-
-    return 0;
-  });
-
-  const startIndex = (currentPage - 1) * TASKS_PER_PAGE;
-  const paginatedTasks = sortedTasks.slice(startIndex, startIndex + TASKS_PER_PAGE);
-
-  const totalPages = Math.ceil(tasks.length / TASKS_PER_PAGE);
-
-  const handleSort = (key: keyof Task) => {
-    if (sortKey === key) {
-      setSortOrder(prev => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortOrder("asc");
-    }
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
   };
 
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const paginatedTasks = tasks.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
   return (
-    <>
-      <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "2rem" }}>
-        <thead>
-          <tr>
-            <th style={cellStyle} onClick={() => handleSort("title")}>Title ⬍</th>
-            <th style={cellStyle} onClick={() => handleSort("status")}>Status ⬍</th>
-            <th style={cellStyle}>Category</th>
-            <th style={cellStyle}>Tags</th>
-            <th style={cellStyle} onClick={() => handleSort("dueDate")}>Due Date ⬍</th>
-            <th style={cellStyle}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedTasks.map(task => (
-            <tr key={task.id}>
-              <td style={cellStyle}>{task.title}</td>
-              <td style={cellStyle}>{task.status}</td>
-              <td style={cellStyle}>{getCategoryName(task.categoryId)}</td>
-              <td style={cellStyle}>{getTagNames(task.tagIds)}</td>
-              <td style={cellStyle}>{new Date(task.dueDate).toLocaleDateString()}</td>
-              <td style={cellStyle}>
-                <button onClick={() => onEdit(task)} style={{ marginRight: "0.5rem" }}>Edit</button>
-                <button onClick={() => onDelete(task.id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <Box>
+      {tasks.length === 0 ? (
+        <Typography variant="body1">No tasks found.</Typography>
+      ) : (
+        <>
+          <TableContainer component={Paper} sx={{ mt: 2 }}>
+            <Table>
+            <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Title</TableCell>
+                <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Category</TableCell>
+                <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Tags</TableCell>
+                <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Due Date</TableCell>
+                <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }} align="center">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+              <TableBody>
+                {paginatedTasks.map((task) => (
+                  <TableRow key={task.id}>
+                    <TableCell>{task.title}</TableCell>
+                    <TableCell>{task.status}</TableCell>
+                    <TableCell>{getCategoryName(task.categoryId)}</TableCell>
+                    <TableCell>{renderTagBadges(task.tagIds)}</TableCell>
+                    <TableCell>{new Date(task.dueDate).toLocaleDateString()}</TableCell>
+                    <TableCell align="center">
+                      <Tooltip title="Edit">
+                        <IconButton onClick={() => onEdit(task)}>
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton onClick={() => onDelete(task.id)}>
+                          <DeleteIcon color="error" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
 
-      {/* Pagination Controls */}
-      <div style={{ marginTop: "1rem", textAlign: "center" }}>
-        <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
-          Previous
-        </button>
-        <span style={{ margin: "0 1rem" }}>
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage(p => p + 1)}
-        >
-          Next
-        </button>
-      </div>
-    </>
+          <TablePagination
+            component="div"
+            count={tasks.length}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[5, 10, 25]}
+          />
+        </>
+      )}
+    </Box>
   );
-};
-
-const cellStyle: React.CSSProperties = {
-  padding: "0.75rem",
-  border: "1px solid #ccc",
-  textAlign: "left",
-  cursor: "pointer",
 };
 
 export default TaskTable;
