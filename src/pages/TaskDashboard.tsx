@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import TaskForm from "../components/Task/TaskForm";
 import TaskTable from "../components/Task/TaskTable";
+import TaskCardView from "../components/Task/TaskCardView";
 import FilterPanel from "../components/Task/FilterPanel";
 import TaskFormModal from "../components/Task/TaskFormModal";
 import { Task, Category, Tag, TaskStatus } from "../types/models";
-import { Button } from "@mui/material";
+import { Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import {
   createTask,
   updateTask,
@@ -34,6 +34,16 @@ const TaskDashboard = () => {
     tagIds: [],
     searchQuery: "",
   });
+  const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
+
+  const handleViewChange = (
+    event: React.MouseEvent<HTMLElement>,
+    newView: 'list' | 'card' | null
+  ) => {
+    if (newView !== null) {
+      setViewMode(newView);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -143,13 +153,34 @@ const TaskDashboard = () => {
         onChange={(f) => setFilters(f)}
       />
 
-      <TaskTable
-        tasks={filteredTasks}
-        categories={categories}
-        tags={tags}
-        onEdit={handleEditTask}
-        onDelete={handleDeleteTask}
-      />
+      <ToggleButtonGroup
+          value={viewMode}
+          exclusive
+          onChange={handleViewChange}
+          size="small"
+          sx={{ mb: 2 }}
+        >
+          <ToggleButton value="list">List</ToggleButton>
+          <ToggleButton value="card">Card</ToggleButton>
+        </ToggleButtonGroup>
+
+      {viewMode === 'list' ? (
+        <TaskTable
+          tasks={filteredTasks}
+          tags={tags}
+          categories={categories}
+          onEdit={handleUpdateTask}
+          onDelete={handleDeleteTask}
+        />
+      ) : (
+        <TaskCardView
+          tasks={filteredTasks}
+          tags={tags}
+          categories={categories}
+          onEdit={handleUpdateTask}
+          onDelete={handleDeleteTask}
+        />
+      )}
     </div>
   );
 };
