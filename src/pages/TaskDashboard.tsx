@@ -16,6 +16,7 @@ import {
   createCategory,
 } from "../firebase/categoryService";
 import { getAllTags } from "../firebase/tagService";
+import { useToast } from "../hooks/useToast";
 
 const TaskDashboard = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -35,6 +36,8 @@ const TaskDashboard = () => {
     searchQuery: "",
   });
   const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
+
+  const { showToast, Toast } = useToast();
 
   const handleViewChange = (
     event: React.MouseEvent<HTMLElement>,
@@ -63,7 +66,7 @@ const TaskDashboard = () => {
       setTags(tgs);
       setTasks(tsks);
 
-    const listener = () => setShowForm(true);
+      const listener = () => setShowForm(true);
       window.addEventListener("openTaskForm", listener);
       return () => window.removeEventListener("openTaskForm", listener);
     };
@@ -76,8 +79,10 @@ const TaskDashboard = () => {
       const newTask = await createTask(taskData);
       setTasks((prev) => [...prev, newTask]);
       setShowForm(false);
+      showToast("Task created successfully!", "success");
     } catch (error) {
       console.error("Error creating task:", error);
+      showToast("Error creating task", "error");
     }
   };
 
@@ -90,8 +95,10 @@ const TaskDashboard = () => {
       );
       setEditingTask(null);
       setShowForm(false);
+      showToast("Task updated successfully!", "success");
     } catch (error) {
       console.error("Error updating task:", error);
+      showToast("Error updating task", "error");
     }
   };
 
@@ -101,8 +108,10 @@ const TaskDashboard = () => {
     try {
       await deleteTask(taskId);
       setTasks(prev => prev.filter(t => t.id !== taskId));
+      showToast("Task deleted successfully!", "success");
     } catch (error) {
       console.error("Error deleting task:", error);
+      showToast("Error deleting task", "error");
     }
   };
 
@@ -129,8 +138,8 @@ const TaskDashboard = () => {
 
       {!showForm && (
         <Button variant="contained" onClick={() => setShowForm(true)}>
-        + Add Task
-      </Button>
+          + Add Task
+        </Button>
       )}
 
       {showForm && (
@@ -144,7 +153,7 @@ const TaskDashboard = () => {
           categories={categories}
           tags={tags}
           initialData={editingTask ?? undefined}
-      />
+        />
       )}
 
       <FilterPanel
@@ -154,22 +163,22 @@ const TaskDashboard = () => {
       />
 
       <ToggleButtonGroup
-          value={viewMode}
-          exclusive
-          onChange={handleViewChange}
-          size="small"
-          sx={{ mb: 2 }}
-        >
-          <ToggleButton value="list">List</ToggleButton>
-          <ToggleButton value="card">Card</ToggleButton>
-        </ToggleButtonGroup>
+        value={viewMode}
+        exclusive
+        onChange={handleViewChange}
+        size="small"
+        sx={{ mb: 2 }}
+      >
+        <ToggleButton value="list">List</ToggleButton>
+        <ToggleButton value="card">Card</ToggleButton>
+      </ToggleButtonGroup>
 
       {viewMode === 'list' ? (
         <TaskTable
           tasks={filteredTasks}
           tags={tags}
           categories={categories}
-          onEdit={handleUpdateTask}
+          onEdit={handleEditTask}
           onDelete={handleDeleteTask}
         />
       ) : (
@@ -177,10 +186,12 @@ const TaskDashboard = () => {
           tasks={filteredTasks}
           tags={tags}
           categories={categories}
-          onEdit={handleUpdateTask}
+          onEdit={handleEditTask}
           onDelete={handleDeleteTask}
         />
       )}
+
+      {Toast}
     </div>
   );
 };
