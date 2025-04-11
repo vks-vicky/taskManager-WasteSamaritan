@@ -5,6 +5,8 @@ import {
   CircularProgress,
   Card,
   CardContent,
+  Button,
+  Stack,
 } from "@mui/material";
 import { Task, Category } from "../types/models";
 import { getAllTasks } from "../firebase/taskService";
@@ -13,12 +15,16 @@ import TaskStatusPieChart from "../components/Analytics/TaskStatusPieChart";
 import CategoryBarChart from "../components/Analytics/CategoryBarChart";
 import TaskTimelineChart from "../components/Analytics/TaskTimelineChart";
 import OverdueCategoryChart from "../components/Analytics/OverdueCategoryChart";
-
+import { exportAnalyticsToExcel } from "../utils/exportAnalytics";
+import { useToast } from "../hooks/useToast";
 
 const AnalyticsDashboard = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+
+  const { showToast, Toast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,6 +37,19 @@ const AnalyticsDashboard = () => {
 
     fetchData();
   }, []);
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      await exportAnalyticsToExcel(tasks, categories);
+      showToast("Analytics exported to Excel!", "success");
+    } catch (err) {
+      console.error("Export failed", err);
+      showToast("Failed to export analytics.", "error");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -46,6 +65,19 @@ const AnalyticsDashboard = () => {
         Analytics Dashboard
       </Typography>
 
+      {/* Export Button */}
+      <Stack direction="row" sx={{ mb: 3 }}>
+        <Button
+          variant="outlined"
+          onClick={handleExport}
+          disabled={exporting}
+          startIcon={exporting ? <CircularProgress size={18} /> : null}
+        >
+          {exporting ? "Exporting..." : "Export Analytics"}
+        </Button>
+      </Stack>
+
+      {/* Charts */}
       <Box
         sx={{
           display: "flex",
@@ -69,9 +101,9 @@ const AnalyticsDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Category Bar Chart */}
+        {/* Category Distribution Bar Chart */}
         <Card
-            sx={{
+          sx={{
             flex: "1 1 48%",
             minWidth: 300,
             boxShadow: 3,
@@ -84,34 +116,38 @@ const AnalyticsDashboard = () => {
           </CardContent>
         </Card>
 
-          {/* Task Timeline Chart */}
+        {/* Task Creation Timeline */}
         <Card
-            sx={{
+          sx={{
             flex: "1 1 48%",
+            minWidth: 300,
             boxShadow: 3,
             border: "1px solid #e0e0e0",
             borderRadius: 2,
-            }}
+          }}
         >
-            <CardContent>
+          <CardContent>
             <TaskTimelineChart tasks={tasks} />
-            </CardContent>
+          </CardContent>
         </Card>
-        
+
+        {/* Overdue Tasks by Category */}
         <Card
-            sx={{
-                flex: "1 1 48%",
-                minWidth: 300,
-                boxShadow: 3,
-                border: "1px solid #e0e0e0",
-                borderRadius: 2,
-            }}
+          sx={{
+            flex: "1 1 48%",
+            minWidth: 300,
+            boxShadow: 3,
+            border: "1px solid #e0e0e0",
+            borderRadius: 2,
+          }}
         >
-        <CardContent>
+          <CardContent>
             <OverdueCategoryChart tasks={tasks} categories={categories} />
-        </CardContent>
+          </CardContent>
         </Card>
       </Box>
+
+      {Toast}
     </Box>
   );
 };

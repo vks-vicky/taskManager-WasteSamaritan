@@ -1,10 +1,18 @@
 import { useEffect, useState } from "react";
+import {
+  Box,
+  Button,
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup,
+  CircularProgress,
+  Stack,
+} from "@mui/material";
 import TaskTable from "../components/Task/TaskTable";
 import TaskCardView from "../components/Task/TaskCardView";
 import FilterPanel from "../components/Task/FilterPanel";
 import TaskFormModal from "../components/Task/TaskFormModal";
 import { Task, Category, Tag, TaskStatus } from "../types/models";
-import { Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import {
   createTask,
   updateTask,
@@ -16,6 +24,7 @@ import {
   createCategory,
 } from "../firebase/categoryService";
 import { getAllTags } from "../firebase/tagService";
+import { exportTasksToExcel } from "../utils/exportUtils";
 import { useToast } from "../hooks/useToast";
 
 const TaskDashboard = () => {
@@ -24,6 +33,8 @@ const TaskDashboard = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [exporting, setExporting] = useState(false);
+
   const [filters, setFilters] = useState<{
     status?: TaskStatus;
     categoryId?: string;
@@ -35,18 +46,9 @@ const TaskDashboard = () => {
     tagIds: [],
     searchQuery: "",
   });
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
 
+  const [viewMode, setViewMode] = useState<"list" | "card">("list");
   const { showToast, Toast } = useToast();
-
-  const handleViewChange = (
-    event: React.MouseEvent<HTMLElement>,
-    newView: 'list' | 'card' | null
-  ) => {
-    if (newView !== null) {
-      setViewMode(newView);
-    }
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -90,8 +92,10 @@ const TaskDashboard = () => {
     if (!editingTask) return;
     try {
       await updateTask(editingTask.id, updatedData);
-      setTasks(prev =>
-        prev.map(t => (t.id === editingTask.id ? { ...t, ...updatedData } : t))
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === editingTask.id ? { ...t, ...updatedData } : t
+        )
       );
       setEditingTask(null);
       setShowForm(false);
@@ -107,7 +111,7 @@ const TaskDashboard = () => {
     if (!confirm) return;
     try {
       await deleteTask(taskId);
-      setTasks(prev => prev.filter(t => t.id !== taskId));
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
       showToast("Task deleted successfully!", "success");
     } catch (error) {
       console.error("Error deleting task:", error);
@@ -120,11 +124,38 @@ const TaskDashboard = () => {
     setShowForm(true);
   };
 
-  const filteredTasks = tasks.filter(task => {
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      await exportTasksToExcel(tasks, categories, tags);
+      showToast("All tasks exported to Excel!", "success");
+    } catch (error) {
+      console.error("Export failed:", error);
+      showToast("Failed to export all tasks.", "error");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportFiltered = async () => {
+    try {
+      setExporting(true);
+      await exportTasksToExcel(filteredTasks, categories, tags);
+      showToast("Filtered tasks exported to Excel!", "success");
+    } catch (error) {
+      console.error("Export failed:", error);
+      showToast("Failed to export filtered tasks.", "error");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const filteredTasks = tasks.filter((task) => {
     const matchStatus = !filters.status || task.status === filters.status;
     const matchCategory = !filters.categoryId || task.categoryId === filters.categoryId;
     const matchTags =
-      filters.tagIds.length === 0 || filters.tagIds.every(id => task.tagIds.includes(id));
+      filters.tagIds.length === 0 ||
+      filters.tagIds.every((id) => task.tagIds.includes(id));
     const matchSearch =
       task.title.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
       (task.description ?? "").toLowerCase().includes(filters.searchQuery.toLowerCase());
@@ -133,15 +164,35 @@ const TaskDashboard = () => {
   });
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h2>Task Management Dashboard</h2>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h5" gutterBottom>
+        Task Management Dashboard
+      </Typography>
 
-      {!showForm && (
+      {/* Buttons */}
+      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
         <Button variant="contained" onClick={() => setShowForm(true)}>
           + Add Task
         </Button>
-      )}
+        <Button
+          variant="outlined"
+          onClick={handleExport}
+          disabled={exporting}
+          startIcon={exporting ? <CircularProgress size={18} /> : null}
+        >
+          {exporting ? "Exporting..." : "Export All"}
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={handleExportFiltered}
+          disabled={exporting}
+          startIcon={exporting ? <CircularProgress size={18} /> : null}
+        >
+          {exporting ? "Exporting..." : "Export Filtered"}
+        </Button>
+      </Stack>
 
+      {/* Form Modal */}
       {showForm && (
         <TaskFormModal
           open={showForm}
@@ -156,16 +207,18 @@ const TaskDashboard = () => {
         />
       )}
 
+      {/* Filters */}
       <FilterPanel
         categories={categories}
         tags={tags}
         onChange={(f) => setFilters(f)}
       />
 
+      {/* View Toggle */}
       <ToggleButtonGroup
         value={viewMode}
         exclusive
-        onChange={handleViewChange}
+        onChange={(e, val) => val && setViewMode(val)}
         size="small"
         sx={{ mb: 2 }}
       >
@@ -173,7 +226,8 @@ const TaskDashboard = () => {
         <ToggleButton value="card">Card</ToggleButton>
       </ToggleButtonGroup>
 
-      {viewMode === 'list' ? (
+      {/* Task Views */}
+      {viewMode === "list" ? (
         <TaskTable
           tasks={filteredTasks}
           tags={tags}
@@ -192,7 +246,7 @@ const TaskDashboard = () => {
       )}
 
       {Toast}
-    </div>
+    </Box>
   );
 };
 
