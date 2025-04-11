@@ -1,3 +1,17 @@
+import {
+  Box,
+  Button,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+  FormControl,
+  InputLabel,
+  Checkbox,
+  FormGroup,
+  FormControlLabel,
+  Stack,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { TaskStatus, Category, Tag, Task } from "../../types/models";
 
@@ -31,24 +45,21 @@ const TaskForm: React.FC<Props> = ({ onSubmit, categories, tags, initialData }) 
       setStatus(initialData.status);
       setCategoryId(initialData.categoryId);
       setTagIds(initialData.tagIds);
-      setDueDate(initialData.dueDate.split("T")[0]); // For input[type=date]
+      setDueDate(initialData.dueDate.split("T")[0]); // for <input type="date">
     }
   }, [initialData]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    const payload = {
+    onSubmit({
       title,
       description,
       status,
       categoryId,
       tagIds,
       dueDate,
-      createdAt: initialData?.createdAt || new Date().toISOString()
-    };
-
-    onSubmit(payload);
+      createdAt: initialData?.createdAt || new Date().toISOString(),
+    });
   };
 
   const toggleTag = (tagId: string) => {
@@ -60,79 +71,93 @@ const TaskForm: React.FC<Props> = ({ onSubmit, categories, tags, initialData }) 
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-    >
-      <input
-        type="text"
-        placeholder="Title"
-        value={title}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          setTitle(e.target.value)
-        }
-        required
-      />
+    <Box component="form" onSubmit={handleSubmit} sx={{ mb: 4 }}>
+      <Stack spacing={3}>
+        <Typography variant="h6">
+          {initialData ? "Edit Task" : "Create Task"}
+        </Typography>
 
-      <textarea
-        placeholder="Description"
-        value={description}
-        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-          setDescription(e.target.value)
-        }
-      />
+        <TextField
+          label="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          fullWidth
+        />
 
-      <select
-        value={status}
-        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-          setStatus(e.target.value as TaskStatus)
-        }
-      >
-        <option value="todo">To Do</option>
-        <option value="in-progress">In Progress</option>
-        <option value="done">Done</option>
-      </select>
+        <TextField
+          label="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          multiline
+          rows={3}
+          fullWidth
+        />
 
-      <select
-        value={categoryId}
-        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-          setCategoryId(e.target.value)
-        }
-        required
-      >
-        <option value="">Select Category</option>
-        {categories.map((cat) => (
-          <option key={cat.id} value={cat.id}>
-            {cat.name}
-          </option>
-        ))}
-      </select>
+        <FormControl fullWidth>
+          <InputLabel>Status</InputLabel>
+          <Select
+            value={status}
+            label="Status"
+            onChange={(e) => setStatus(e.target.value as TaskStatus)}
+          >
+            <MenuItem value="todo">To Do</MenuItem>
+            <MenuItem value="in-progress">In Progress</MenuItem>
+            <MenuItem value="done">Done</MenuItem>
+          </Select>
+        </FormControl>
 
-      <div>
-        {tags.map((tag) => (
-          <label key={tag.id} style={{ marginRight: "10px" }}>
-            <input
-              type="checkbox"
-              value={tag.id}
-              checked={tagIds.includes(tag.id)}
-              onChange={() => toggleTag(tag.id)}
-            />
-            {tag.name}
-          </label>
-        ))}
-      </div>
+        <FormControl fullWidth>
+          <InputLabel>Category</InputLabel>
+          <Select
+            value={categoryId}
+            label="Category"
+            onChange={(e) => setCategoryId(e.target.value)}
+            required
+          >
+            {categories.map((cat) => (
+              <MenuItem key={cat.id} value={cat.id}>
+                {cat.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-      <input
-        type="date"
-        value={dueDate}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          setDueDate(e.target.value)
-        }
-        required
-      />
+        <FormControl component="fieldset">
+          <Typography variant="subtitle1" gutterBottom>
+            Tags
+          </Typography>
+          <FormGroup row>
+            {tags.map((tag) => (
+              <FormControlLabel
+                key={tag.id}
+                control={
+                  <Checkbox
+                    checked={tagIds.includes(tag.id)}
+                    onChange={() => toggleTag(tag.id)}
+                  />
+                }
+                label={tag.name}
+              />
+            ))}
+          </FormGroup>
+        </FormControl>
 
-      <button type="submit">{initialData ? "Update Task" : "Create Task"}</button>
-    </form>
+        <TextField
+          label="Due Date"
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          required
+          fullWidth
+        />
+
+        <Button type="submit" variant="contained" color="primary">
+          {initialData ? "Update Task" : "Create Task"}
+        </Button>
+      </Stack>
+    </Box>
   );
 };
 

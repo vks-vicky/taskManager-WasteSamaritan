@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import TaskForm from "../components/Task/TaskForm";
 import TaskTable from "../components/Task/TaskTable";
 import FilterPanel from "../components/Task/FilterPanel";
-import TagManager from "../components/Tag/TagManager";
-import CategoryManager from "../components/Category/CategoryManager";
+import TaskFormModal from "../components/Task/TaskFormModal";
 import { Task, Category, Tag, TaskStatus } from "../types/models";
+import { Button } from "@mui/material";
 import {
   createTask,
   updateTask,
@@ -114,16 +114,23 @@ const TaskDashboard = () => {
       <h2>Task Management Dashboard</h2>
 
       {!showForm && (
-        <button onClick={() => setShowForm(true)}>+ Add Task</button>
+        <Button variant="contained" onClick={() => setShowForm(true)}>
+        + Add Task
+      </Button>
       )}
 
       {showForm && (
-        <TaskForm
+        <TaskFormModal
+          open={showForm}
+          onClose={() => {
+            setShowForm(false);
+            setEditingTask(null);
+          }}
           onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
           categories={categories}
           tags={tags}
           initialData={editingTask ?? undefined}
-        />
+      />
       )}
 
       <FilterPanel
