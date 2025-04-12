@@ -1,46 +1,122 @@
-# Getting Started with Create React App
+# 📋 Task Management System with Analytics
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-featured task management web app with analytics, built using **React**, **Firebase**, and **Material UI**. Includes task tracking, data visualization, and export to Excel functionality.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## ✨ Features
 
-### `npm start`
+### ✅ Task Management
+- Create, edit, delete tasks
+- Task fields: title, description, due date, status, category, tags
+- Filter by status, category (single select), and tags (multi-select)
+- Search tasks by title or description
+- Toggle between **list view** and **card/grid view**
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### 📊 Analytics Dashboard
+- **Task Status Distribution** (Pie chart)
+- **Category Distribution** (Bar chart)
+- **Task Creation Timeline** (Line chart)
+- **Overdue Tasks by Category** (Bar chart)
+- Responsive charts using **Recharts**
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### 📤 Export to Excel
+- **Task Dashboard**
+  - Export all or filtered tasks
+  - Includes all task fields
+- **Analytics Dashboard**
+  - **Summary Sheet:** total tasks, task status breakdown, overdue count, category distribution with percentages
+  - **Detailed Sheet:** raw task data
 
-### `npm test`
+### 💅 UI/UX
+- Built with **Material UI (MUI)**
+- Responsive layout for mobile and desktop
+- Toast notifications for actions (success/error)
+- Light theme optimized for clarity
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
 
-### `npm run build`
+## ⚙️ Tech Stack
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- **Frontend**: React, TypeScript
+- **UI Library**: Material UI (MUI)
+- **Charts**: Recharts
+- **Export**: `xlsx` and `file-saver`
+- **Backend (Persistence)**: Firebase Realtime Database
+- **Date Handling**: date-fns
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🚀 Setup Instructions
 
-### `npm run eject`
+1. **Clone the repo**:
+```bash
+git clone https://github.com/your-username/task-manager-app.git
+cd task-manager-app
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+2. **Install dependencies**:
+```bash
+npm install
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+3. **Configure Firebase**:
+- Create a Firebase project
+- Enable Realtime Database
+- Add your Firebase config in `src/firebase/config.ts`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+4. **Start the app**:
+```bash
+npm start
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+---
 
-## Learn More
+## 📁 Folder Structure (simplified)
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```
+src/
+├── components/
+│   └── Task/               # Task UI (Table, Cards, Filter, Modal)
+│   └── Analytics/          # Charts for analytics
+├── firebase/               # Firebase services
+├── hooks/                  # Custom hooks (e.g., useToast)
+├── pages/                  # Dashboard pages
+├── utils/                  # Export to Excel utilities
+└── types/                  # TypeScript models
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
+
+## 📸 Screenshots
+
+### 📝 Task Table View
+![Task Table](./screenshots/task-table.png)
+
+### 🧩 Card View
+![Card View](./screenshots/card-view.png)
+
+### 🔍 Filters & Search
+![Filters](./screenshots/filters.png)
+
+### 📊 Analytics Dashboard
+![Analytics](./screenshots/analytics.png)
+
+### 📤 Exported Excel
+![Excel Sheet](./screenshots/export-sheet.png)
+
+
+---
+
+## ✅ Assignment Requirements Covered
+
+| Feature                                | Status   |
+|----------------------------------------|----------|
+| Task CRUD                              | ✅        |
+| Filtering (status/category/tags)       | ✅        |
+| Analytics Dashboard (4 charts)         | ✅        |
+| Excel Export - Tasks (all + filtered)  | ✅        |
+| Excel Export - Analytics (2 sheets)    | ✅        |
+| Interactive UI with MUI                | ✅        |
+| Toasts & UX feedback                   | ✅        |
+| Responsive Design                      | ✅        |
