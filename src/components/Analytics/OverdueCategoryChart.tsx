@@ -10,7 +10,7 @@ import {
   } from "recharts";
   import { Typography, Box } from "@mui/material";
   import { Task, Category } from "../../types/models";
-  import { isBefore, parseISO } from "date-fns";
+  import { isBefore } from "date-fns";
   import { useMemo } from "react";
   
   interface Props {

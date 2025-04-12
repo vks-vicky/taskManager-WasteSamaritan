@@ -1,4 +1,4 @@
-import { useState, ReactNode } from "react";
+import { useState } from "react";
 import { Snackbar, Alert, AlertColor } from "@mui/material";
 
 export function useToast() {

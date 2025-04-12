@@ -29,6 +29,17 @@ interface Props {
 const TaskTable: React.FC<Props> = ({ tasks, categories, tags, onEdit, onDelete }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [sortKey, setSortKey] = useState<keyof Task>("title");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (key: keyof Task) => {
+    if (sortKey === key) {
+      setSortOrder(prev => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortOrder("asc");
+    }
+  };
 
   const getCategoryName = (id: string) =>
     categories.find(cat => cat.id === id)?.name || "Unknown";
@@ -66,7 +77,30 @@ const TaskTable: React.FC<Props> = ({ tasks, categories, tags, onEdit, onDelete 
       })}
     </Stack>
   );
-  
+
+  const sortedTasks = [...tasks].sort((a, b) => {
+    const valA = a[sortKey];
+    const valB = b[sortKey];
+
+    if (typeof valA === "string" && typeof valB === "string") {
+      return sortOrder === "asc"
+        ? valA.localeCompare(valB)
+        : valB.localeCompare(valA);
+    }
+
+    if (valA instanceof Date && valB instanceof Date) {
+      return sortOrder === "asc"
+        ? valA.getTime() - valB.getTime()
+        : valB.getTime() - valA.getTime();
+    }
+
+    return 0;
+  });
+
+  const paginatedTasks = sortedTasks.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -77,8 +111,6 @@ const TaskTable: React.FC<Props> = ({ tasks, categories, tags, onEdit, onDelete 
     setPage(0);
   };
 
-  const paginatedTasks = tasks.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
   return (
     <Box>
       {tasks.length === 0 ? (
@@ -87,18 +119,35 @@ const TaskTable: React.FC<Props> = ({ tasks, categories, tags, onEdit, onDelete 
         <>
           <TableContainer component={Paper} sx={{ mt: 2 }}>
             <Table>
-            <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Title</TableCell>
-                <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Category</TableCell>
-                <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Tags</TableCell>
-                <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Due Date</TableCell>
-                <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }} align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
+              <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
+                <TableRow>
+                  <TableCell
+                    onClick={() => handleSort("title")}
+                    sx={{ fontWeight: "bold", fontSize: "1rem", cursor: "pointer" }}
+                  >
+                    Title {sortKey === "title" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </TableCell>
+                  <TableCell
+                    onClick={() => handleSort("status")}
+                    sx={{ fontWeight: "bold", fontSize: "1rem", cursor: "pointer" }}
+                  >
+                    Status {sortKey === "status" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Category</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Tags</TableCell>
+                  <TableCell
+                    onClick={() => handleSort("dueDate")}
+                    sx={{ fontWeight: "bold", fontSize: "1rem", cursor: "pointer" }}
+                  >
+                    Due Date {sortKey === "dueDate" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }} align="center">
+                    Actions
+                  </TableCell>
+                </TableRow>
+              </TableHead>
               <TableBody>
-                {paginatedTasks.map((task) => (
+                {paginatedTasks.map(task => (
                   <TableRow key={task.id}>
                     <TableCell>{task.title}</TableCell>
                     <TableCell>{task.status}</TableCell>
